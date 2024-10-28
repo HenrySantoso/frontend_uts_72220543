@@ -1,0 +1,37 @@
+﻿@page "/category/create"
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<h3>Add Category</h3>
+
+<div>
+    <label for="name">Name:</label>
+    <input id="name" @bind="category.Name" />
+
+    <label for="description">Description:</label>
+    <input id="description" @bind="category.Description" />
+
+    <button class="btn btn-primary" @onclick="SaveCategory">Save</button>
+</div>
+
+@code {
+    private Category category = new Category();
+
+    private async Task SaveCategory()
+    {
+        // Simpan data ke API atau database
+        var response = await Http.PostAsJsonAsync("https://actualbackendapp.azurewebsites.net/api/v1/Categories", category);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JS.InvokeVoidAsync("alert", "Category saved successfully!");
+            category = new Category(); // Reset form setelah menyimpan
+            Navigation.NavigateTo("/category"); // Arahkan kembali ke halaman /category
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "Failed to save category.");
+        }
+    }
+}

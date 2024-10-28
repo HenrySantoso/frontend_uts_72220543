@@ -1,0 +1,91 @@
+﻿@page "/course"
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<PageTitle>Course</PageTitle>
+
+<h1>Course</h1>
+
+<!-- NavLinks for navigation -->
+<NavLink class="btn btn-success mb-3" href="/course/create">Add New Course</NavLink>
+<NavLink class="btn btn-secondary mb-3" href="/test">Go to Test Page</NavLink>
+
+@if (courses == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Image</th>
+                <th>Duration</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var course in courses)
+            {
+                <tr>
+                    <td>@course.courseId</td>
+                    <td>@course.name</td>
+                    <td>
+                        <img src="@course.imageName" alt="@course.name" width="100" height="auto" />
+                    </td>
+                    <td>@course.duration</td>
+                    <td>@course.description</td>
+                    <td>@course.category.Name</td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="() => UpdateCourse(course.courseId)">Update</button>
+                        <button class="btn btn-danger" @onclick="() => DeleteCourse(course.courseId)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private Course[]? courses;
+
+    // tampilkan semua data
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch data from the API
+        courses = await Http.GetFromJsonAsync<Course[]>("https://actualbackendapp.azurewebsites.net/api/Courses");
+    }
+
+    private async Task UpdateCourse(int? courseId)
+    {
+        if (courseId.HasValue)
+        {
+            int id = courseId.Value;
+            Navigation.NavigateTo($"/course/edit/{id}");
+        }
+    }
+
+    private async Task DeleteCourse(int? courseId)
+    {
+        if (courseId.HasValue)
+        {
+            int id = courseId.Value;
+
+            // Confirm deletion with the user
+            bool confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this course?");
+            if (confirmed)
+            {
+                // Delete the course with id
+                await Http.DeleteAsync($"https://actualbackendapp.azurewebsites.net/api/Courses/{id}");
+
+                // Refresh the course list after deletion
+                courses = await Http.GetFromJsonAsync<Course[]>("https://actualbackendapp.azurewebsites.net/api/Courses");
+            }
+        }
+    }
+}

@@ -1,0 +1,69 @@
+﻿@page "/course/create"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<PageTitle>Add New Course</PageTitle>
+
+<h2>Add New Course</h2>
+
+<EditForm Model="newCourse" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Name</label>
+        <InputText class="form-control" @bind-Value="newCourse.Name" />
+    </div>
+
+    <div class="mb-3">
+        <label>Image URL</label>
+        <InputText class="form-control" @bind-Value="newCourse.ImageName" />
+    </div>
+
+    <div class="mb-3">
+        <label>Duration</label>
+        <InputText class="form-control" @bind-Value="newCourse.Duration" />
+    </div>
+
+    <div class="mb-3">
+        <label>Description</label>
+        <InputTextArea class="form-control" @bind-Value="newCourse.Description" />
+    </div>
+
+    <div class="mb-3">
+        <label>Category</label>
+        <InputText class="form-control" @bind-Value="newCourse.Category" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+</EditForm>
+
+@code {
+    private Course newCourse = new Course();
+
+    private async Task HandleValidSubmit()
+    {
+        // Post the new course to the API
+        await Http.PostAsJsonAsync("https://actualbackendapp.azurewebsites.net/api/Courses", newCourse);
+
+        // Navigate back to the course list page
+        Navigation.NavigateTo("/course");
+    }
+
+    private void Cancel()
+    {
+        // Navigate back to the course list page
+        Navigation.NavigateTo("/course");
+    }
+
+    // Sample Course model class
+    public class Course
+    {
+        public string Name { get; set; } = string.Empty;
+        public string ImageName { get; set; } = string.Empty;
+        public string Duration { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+    }
+}
