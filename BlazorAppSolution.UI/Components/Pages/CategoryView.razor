@@ -1,52 +1,92 @@
 ﻿@page "/category"
-@inject HttpClient Http
+@using BlazorAppSolution.UI.Model
+@using BlazorAppSolution.UI.Services
+@inject CategoryService CategoryService
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 
 <PageTitle>Category</PageTitle>
 
-<h1>Category</h1>
+<div class="catalog-container">
+    <h1>Catalog</h1>
 
-<NavLink class="btn btn-success mb-3" href="/category/create">Add New Category</NavLink>
+    <NavLink class="btn btn-primary mb-3" href="/category/create">Add New Category</NavLink>
 
-@if (categories == null)
-{
-    <p><em>Loading...</em></p>
-}
-else if (categories.Length == 0)
-{
-    <p>No categories found.</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
+    @if (categories == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else if (categories.Count == 0)
+    {
+        <p>No categories found.</p>
+    }
+    else
+    {
+        <div class="row">
             @foreach (var category in categories)
             {
-                <tr>
-                    <td>@category.CategoryId</td>
-                    <td>@category.Name</td>
-                    <td>@category.Description</td>
-                    <td>
-                        <button class="btn btn-primary" @onclick="() => UpdateCategory(category.CategoryId)">Update</button>
-                        <button class="btn btn-danger" @onclick="() => DeleteCategory(category.CategoryId)">Delete</button>
-                    </td>
-                </tr>
+                <div class="col-md-4 mb-4">
+                    <div class="card category-card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">@category.Name</h5>
+                            <p class="card-text">@category.Description</p>
+                            <button class="btn btn-secondary me-2" @onclick="() => UpdateCategory(category.CategoryId)">Update</button>
+                            <button class="btn btn-danger" @onclick="() => TestDeleteButton(category.CategoryId)">Delete</button>
+                        </div>
+                    </div>
+                </div>
             }
-        </tbody>
-    </table>
-}
+        </div>
+    }
+</div>
+
+<style>
+    .catalog-container {
+        background-color: #ffffff; /* White background for the container */
+        color: #000000; /* Black text color */
+        padding: 20px;
+    }
+
+    .category-card {
+        background-color: #f8f9fa; /* Light gray background for cards */
+        color: #000000; /* Black text color */
+        border: 1px solid #ccc; /* Light border for cards */
+        border-radius: 10px; /* Curved edges */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
+        transition: transform 0.2s; /* Smooth transition for hover effect */
+    }
+
+    .category-card:hover {
+        transform: translateY(-2px); /* Slight lift on hover */
+    }
+
+    .category-card .btn-secondary {
+        background-color: #007bff; /* Primary button color */
+        color: #ffffff; /* White text */
+    }
+
+    .category-card .btn-secondary:hover {
+        background-color: #0056b3; /* Darker shade on hover */
+        color: #ffffff;
+    }
+
+    .category-card .btn-danger {
+        background-color: #dc3545; /* Danger button color */
+        color: #ffffff; /* White text */
+    }
+
+    .category-card .btn-danger:hover {
+        background-color: #c82333; /* Darker shade on hover */
+        color: #ffffff;
+    }
+
+    .text-center { /* Centering text */
+        text-align: center;
+    }
+</style>
 
 @code {
-    private Category[]? categories;
+    private List<Category>? categories;
 
     protected override async Task OnInitializedAsync()
     {
@@ -57,7 +97,7 @@ else
     {
         try
         {
-            categories = await Http.GetFromJsonAsync<Category[]>("https://actualbackendapp.azurewebsites.net/api/v1/Categories");
+            categories = await CategoryService.GetCategoriesAsync();
         }
         catch (Exception ex)
         {
@@ -70,29 +110,26 @@ else
         Navigation.NavigateTo($"/category/edit/{categoryId}");
     }
 
+    private async Task TestDeleteButton(int categoryId)
+    {
+        await JS.InvokeVoidAsync("alert", $"Delete button clicked for Category ID: {categoryId}");
+        await DeleteCategory(categoryId);
+    }
+
     private async Task DeleteCategory(int categoryId)
     {
-        try
+        bool confirm = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this category?");
+        if (confirm)
         {
-            bool confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this category?");
-            
-            if (confirmed)
+            try
             {
-                var response = await Http.DeleteAsync($"https://actualbackendapp.azurewebsites.net/api/v1/Categories/{categoryId}");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    await LoadCategories(); // Refresh the list after deletion
-                }
-                else
-                {
-                    await JS.InvokeVoidAsync("alert", "Error deleting category.");
-                }
+                await CategoryService.DeleteCategoryAsync(categoryId);
+                await LoadCategories(); // Refresh the category list after deletion
             }
-        }
-        catch (Exception ex)
-        {
-            await JS.InvokeVoidAsync("alert", $"An error occurred: {ex.Message}");
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", $"An error occurred while deleting the category: {ex.Message}");
+            }
         }
     }
 }

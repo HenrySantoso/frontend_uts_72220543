@@ -1,5 +1,5 @@
 using BlazorAppSolution.UI.Components;
-using BlazorAppSolution.UI.Controllers;
+using BlazorAppSolution.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,10 +7,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-//add controller
+// Register CategoryService
+builder.Services.AddScoped<CategoryService>(); // Add this line
+builder.Services.AddScoped<CourseService>();
+
+// Add controllers
 builder.Services.AddControllers();
 
-//register httpclient
+// Register HttpClient
 builder.Services.AddHttpClient();
 
 var app = builder.Build();

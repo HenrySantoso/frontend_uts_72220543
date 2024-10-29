@@ -1,15 +1,15 @@
-﻿namespace BlazorAppSolution.UI;
+﻿namespace BlazorAppSolution.UI.Model;
 public class Course
 {
-    public int? courseId { get; set; }
+    public int? CourseId { get; set; }
 
-    public string? name { get; set; }
+    public string? Name { get; set; }
 
-    public string? imageName { get; set; }
+    public string? ImageName { get; set; }
 
-    public int? duration { get; set; }
+    public int? Duration { get; set; }
 
-    public string? description { get; set; }
+    public string? Description { get; set; }
 
-    public Category category { get; set; }
+    public Category Category { get; set; }
 }
