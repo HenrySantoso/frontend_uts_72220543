@@ -2,7 +2,7 @@
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using BlazorAppSolution.UI.Model; 
+using BlazorAppSolution.UI.Model;
 
 namespace BlazorAppSolution.UI.Services
 {
@@ -23,7 +23,7 @@ namespace BlazorAppSolution.UI.Services
         }
 
         // Get a category by ID
-        public async Task<Category> GetCategoryAsync(int id)
+        public async Task<Category> GetCategoryByIDAsync(int id)
         {
             return await _httpClient.GetFromJsonAsync<Category>($"{ApiUrl}/{id}");
         }

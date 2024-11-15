@@ -9,7 +9,8 @@ namespace BlazorAppSolution.UI.Services
     public class CourseService
     {
         private readonly HttpClient _httpClient;
-        private const string ApiUrl = "https://actualbackendapp.azurewebsites.net/api/Courses";
+        private const string CourseApiUrl = "https://actualbackendapp.azurewebsites.net/api/Courses";
+        private const string CategoryApiUrl = "https://actualbackendapp.azurewebsites.net/api/v1/Categories"; // New API URL for categories
 
         public CourseService(HttpClient httpClient)
         {
@@ -19,19 +20,19 @@ namespace BlazorAppSolution.UI.Services
         // Get all courses
         public async Task<List<Course>> GetCoursesAsync()
         {
-            return await _httpClient.GetFromJsonAsync<List<Course>>(ApiUrl);
+            return await _httpClient.GetFromJsonAsync<List<Course>>(CourseApiUrl);
         }
 
         // Get a course by ID
-        public async Task<Course> GetCourseAsync(int id)
+        public async Task<Course> GetCourseByIDAsync(int id)
         {
-            return await _httpClient.GetFromJsonAsync<Course>($"{ApiUrl}/{id}");
+            return await _httpClient.GetFromJsonAsync<Course>($"{CourseApiUrl}/{id}");
         }
 
         // Create a new course
         public async Task<Course> CreateCourseAsync(Course course)
         {
-            var response = await _httpClient.PostAsJsonAsync(ApiUrl, course);
+            var response = await _httpClient.PostAsJsonAsync(CourseApiUrl, course);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<Course>();
         }
@@ -39,16 +40,44 @@ namespace BlazorAppSolution.UI.Services
         // Update an existing course
         public async Task<Course> UpdateCourseAsync(int id, Course course)
         {
-            var response = await _httpClient.PutAsJsonAsync($"{ApiUrl}/{id}", course);
+            var courseToUpdate = new
+            {
+                course.Name,
+                course.Description,
+                course.Duration,
+                course.ImageName,
+                CategoryId = course.Category?.CategoryId
+            };
+
+            var response = await _httpClient.PutAsJsonAsync($"{CourseApiUrl}/{id}", courseToUpdate);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<Course>();
         }
 
+
         // Delete a course
         public async Task DeleteCourseAsync(int id)
         {
-            var response = await _httpClient.DeleteAsync($"{ApiUrl}/{id}");
+            var response = await _httpClient.DeleteAsync($"{CourseApiUrl}/{id}");
             response.EnsureSuccessStatusCode();
         }
+
+        // New method to get all categories
+        public async Task<List<Category>> GetCategoriesAsync()
+        {
+            return await _httpClient.GetFromJsonAsync<List<Category>>(CategoryApiUrl); // Fetch categories from the new API URL
+        }
+
+        // New method to get a course by Name
+        public async Task<List<Course>> GetCourseByNameAsync(string courseName)
+        {
+            var response = await _httpClient.GetAsync($"{CourseApiUrl}/search/{courseName}");
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<List<Course>>() ?? new List<Course>();
+            }
+            throw new Exception($"Failed to fetch courses: {response.ReasonPhrase}");
+        }
+
     }
 }

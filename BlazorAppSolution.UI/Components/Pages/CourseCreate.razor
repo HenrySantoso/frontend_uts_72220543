@@ -1,69 +1,97 @@
 ﻿@page "/course/create"
-@inject HttpClient Http
+@using BlazorAppSolution.UI.Model
+@using BlazorAppSolution.UI.Services
+@inject CourseService CourseService
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
+@rendermode InteractiveServer
 
-<PageTitle>Add New Course</PageTitle>
+<h3 class="text-center mt-4">Add New Course</h3>
 
-<h2>Add New Course</h2>
+<div class="container mt-5">
+    <div class="card shadow p-4">
+        <div class="card-body">
+            <form>
+                <div class="form-group mb-3">
+                    <label for="name" class="form-label fw-bold">Name:</label>
+                    <input id="name" @bind="course.Name" class="form-control" placeholder="Enter course name" />
+                </div>
 
-<EditForm Model="newCourse" OnValidSubmit="HandleValidSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+                <div class="form-group mb-3">
+                    <label for="image" class="form-label fw-bold">Image URL:</label>
+                    <input id="image" @bind="course.ImageName" class="form-control" placeholder="Enter image URL" />
+                </div>
 
-    <div class="mb-3">
-        <label>Name</label>
-        <InputText class="form-control" @bind-Value="newCourse.Name" />
+                <div class="form-group mb-3">
+                    <label for="duration" class="form-label fw-bold">Duration:</label>
+                    <input id="duration" type="number" @bind="course.Duration" class="form-control" placeholder="Enter duration in hours" />
+                </div>
+
+                <div class="form-group mb-4">
+                    <label for="description" class="form-label fw-bold">Description:</label>
+                    <input id="description" @bind="course.Description" class="form-control" placeholder="Enter description" />
+                </div>
+
+                <div class="form-group mb-4">
+                    <label for="category" class="form-label fw-bold">Category:</label>
+                    <select id="category" @bind="course.CategoryId" class="form-control">
+                        <option value="">Select Category</option>
+                        @foreach (var category in availableCategories)
+                        {
+                            <option value="@category.CategoryId">@category.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group mb-4 d-flex justify-content-between">
+                    <button type="button" class="btn btn-primary" @onclick="SaveCourse">Save</button>
+                    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button> <!-- Moved Cancel button beside Save -->
+                </div>
+            </form>
+        </div>
     </div>
-
-    <div class="mb-3">
-        <label>Image URL</label>
-        <InputText class="form-control" @bind-Value="newCourse.ImageName" />
-    </div>
-
-    <div class="mb-3">
-        <label>Duration</label>
-        <InputText class="form-control" @bind-Value="newCourse.Duration" />
-    </div>
-
-    <div class="mb-3">
-        <label>Description</label>
-        <InputTextArea class="form-control" @bind-Value="newCourse.Description" />
-    </div>
-
-    <div class="mb-3">
-        <label>Category</label>
-        <InputText class="form-control" @bind-Value="newCourse.Category" />
-    </div>
-
-    <button type="submit" class="btn btn-primary">Save</button>
-    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
-</EditForm>
+</div>
 
 @code {
-    private Course newCourse = new Course();
+    private Course course = new Course { Category = new Category() };
+    private List<Category> availableCategories = new List<Category>();
 
-    private async Task HandleValidSubmit()
+    protected override async Task OnInitializedAsync()
     {
-        // Post the new course to the API
-        await Http.PostAsJsonAsync("https://actualbackendapp.azurewebsites.net/api/Courses", newCourse);
+        try
+        {
+            availableCategories = await CourseService.GetCategoriesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading categories: " + ex.Message);
+        }
+    }
 
-        // Navigate back to the course list page
-        Navigation.NavigateTo("/course");
+    private async Task SaveCourse()
+    {
+        try
+        {
+            if (course.CategoryId == 0)
+            {
+                await JS.InvokeVoidAsync("alert", "Please select a valid category.");
+                return;
+            }
+
+            await CourseService.CreateCourseAsync(course);
+            await JS.InvokeVoidAsync("alert", "Course saved successfully!");
+            Navigation.NavigateTo("/course");
+            course = new Course { Category = new Category() };
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", "Course can't be created!");
+            Console.WriteLine("Error saving course: " + ex);
+        }
     }
 
     private void Cancel()
     {
-        // Navigate back to the course list page
+        // Redirect to the course listing page when canceling
         Navigation.NavigateTo("/course");
-    }
-
-    // Sample Course model class
-    public class Course
-    {
-        public string Name { get; set; } = string.Empty;
-        public string ImageName { get; set; } = string.Empty;
-        public string Duration { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
     }
 }

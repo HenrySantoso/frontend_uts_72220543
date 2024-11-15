@@ -4,6 +4,7 @@
 @inject CourseService CourseService
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
+@rendermode InteractiveServer
 
 <PageTitle>Course</PageTitle>
 
@@ -12,18 +13,22 @@
 
     <NavLink class="btn btn-primary mb-3" href="/course/create">Add New Course</NavLink>
 
-    @if (courses == null)
+    <div class="filter-section mb-3">
+        <input type="text" placeholder="Search by course name" @bind="searchText" class="form-control" @oninput="OnSearchInput" />
+    </div>
+
+    @if (filteredCourses == null)
     {
         <p><em>Loading...</em></p>
     }
-    else if (courses.Count == 0)
+    else if (filteredCourses.Count == 0)
     {
         <p>No courses found.</p>
     }
     else
     {
         <div class="row">
-            @foreach (var course in courses)
+            @foreach (var course in filteredCourses)
             {
                 <div class="col-md-4 mb-4">
                     <div class="card course-card">
@@ -33,8 +38,10 @@
                             <p class="card-text">Duration: @course.Duration</p>
                             <p class="card-text">@course.Description</p>
                             <p class="card-text">Category: @course.Category.Name</p>
-                            <button class="btn btn-secondary me-2" @onclick="() => UpdateCourse(course.CourseId ?? 0)">Update</button>
-                            <button class="btn btn-danger" @onclick="() => DeleteCourse(course.CourseId ?? 0)">Delete</button>
+                            <div class="button-group">
+                                <button class="btn btn-outline-secondary me-2" @onclick="() => UpdateCourse(course.CourseId ?? 0)">Update</button>
+                                <button class="btn btn-outline-danger" @onclick="() => DeleteCourse(course.CourseId ?? 0)">Delete</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -45,51 +52,112 @@
 
 <style>
     .course-container {
-        background-color: #ffffff; /* White background for the container */
-        color: #000000; /* Black text color */
-        padding: 20px;
+        background-color: #f8f9fa;
+        color: #000000;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
 
+    h1 {
+        font-size: 2em;
+        margin-bottom: 20px;
+        color: #343a40;
+        text-align: center;
+    }
+
+    .filter-section input {
+        width: 100%;
+        margin: 0 auto;
+        display: block;
+        padding: 10px 15px;
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+        transition: border-color 0.2s;
+    }
+
+        .filter-section input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
     .course-card {
-        background-color: #f8f9fa; /* Light gray background for cards */
-        color: #000000; /* Black text color */
-        border: 1px solid #ccc; /* Light border for cards */
-        border-radius: 10px; /* Curved edges */
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
-        transition: transform 0.2s; /* Smooth transition for hover effect */
+        background-color: #ffffff;
+        border-radius: 10px;
+        border: 1px solid #eaeaea;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 0.2s;
     }
 
         .course-card:hover {
-            transform: translateY(-2px); /* Slight lift on hover */
+            transform: translateY(-3px);
         }
 
-        .course-card .btn-secondary {
-            background-color: #007bff; /* Primary button color */
-            color: #ffffff; /* White text */
+        .course-card img {
+            max-height: 150px;
+            object-fit: cover;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
         }
 
-            .course-card .btn-secondary:hover {
-                background-color: #0056b3; /* Darker shade on hover */
-                color: #ffffff;
-            }
-
-        .course-card .btn-danger {
-            background-color: #dc3545; /* Danger button color */
-            color: #ffffff; /* White text */
+        .course-card .card-body {
+            flex-grow: 1;
+            padding: 20px;
         }
 
-            .course-card .btn-danger:hover {
-                background-color: #c82333; /* Darker shade on hover */
-                color: #ffffff;
-            }
+        .course-card h5 {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
 
-    .text-center {
-        text-align: center; /* Centering text */
+        .course-card .card-text {
+            color: #6c757d;
+        }
+
+    .button-group {
+        display: flex;
+        justify-content: center;
+        gap: 10px; /* Space between buttons */
     }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 5px;
+        transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    .btn-outline-secondary {
+        border: 1px solid #007bff;
+        color: #007bff;
+        background-color: transparent;
+    }
+
+        .btn-outline-secondary:hover {
+            background-color: #007bff;
+            color: #ffffff;
+        }
+
+    .btn-outline-danger {
+        border: 1px solid #dc3545;
+        color: #dc3545;
+        background-color: transparent;
+    }
+
+        .btn-outline-danger:hover {
+            background-color: #dc3545;
+            color: #ffffff;
+        }
 </style>
 
 @code {
-    private List<Course>? courses;
+    private List<Course>? filteredCourses;
+    private string searchText = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -100,12 +168,37 @@
     {
         try
         {
-            courses = await CourseService.GetCoursesAsync();
+            filteredCourses = await CourseService.GetCoursesAsync();
         }
         catch (Exception ex)
         {
             await JS.InvokeVoidAsync("alert", $"An error occurred while loading courses: {ex.Message}");
         }
+    }
+
+    private async void OnSearchInput(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            // Load all courses if search text is cleared
+            await LoadCourses();
+        }
+        else
+        {
+            try
+            {
+                // Fetch filtered courses from the API
+                filteredCourses = await CourseService.GetCourseByNameAsync(searchText);
+            }
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", $"An error occurred while searching: {ex.Message}");
+            }
+        }
+
+        StateHasChanged(); // Trigger UI update
     }
 
     private void UpdateCourse(int courseId)
@@ -121,7 +214,7 @@
             try
             {
                 await CourseService.DeleteCourseAsync(courseId);
-                await LoadCourses(); // Refresh the course list after deletion
+                await LoadCourses();
             }
             catch (Exception ex)
             {

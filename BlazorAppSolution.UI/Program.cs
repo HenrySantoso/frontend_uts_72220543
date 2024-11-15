@@ -11,18 +11,10 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<CategoryService>(); // Add this line
 builder.Services.AddScoped<CourseService>();
 
-// Add controllers
-builder.Services.AddControllers();
-
 // Register HttpClient
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
-
-app.UseRouting();
-app.MapControllers(); // Maps controllers based on their routes
-
-app.MapBlazorHub();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
