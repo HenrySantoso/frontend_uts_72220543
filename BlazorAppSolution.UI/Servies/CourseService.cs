@@ -76,7 +76,7 @@ namespace BlazorAppSolution.UI.Services
             {
                 return await response.Content.ReadFromJsonAsync<List<Course>>() ?? new List<Course>();
             }
-            throw new Exception($"Failed to fetch courses: {response.ReasonPhrase}");
+            throw new Exception($"Failed to fetch courses: {response.ReasonPhrase}");   
         }
 
     }
