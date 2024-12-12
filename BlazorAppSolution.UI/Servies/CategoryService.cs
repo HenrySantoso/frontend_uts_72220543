@@ -9,7 +9,8 @@ namespace BlazorAppSolution.UI.Services
     public class CategoryService
     {
         private readonly HttpClient _httpClient;
-        private const string ApiUrl = "https://actualbackendapp.azurewebsites.net/api/v1/Categories";
+        private const string BaseUrl = "https://actbackendseervices.azurewebsites.net";
+        private const string ApiUrl = $"{BaseUrl}/api/categories"; // Corrected the ApiUrl initialization
 
         public CategoryService(HttpClient httpClient)
         {
@@ -37,7 +38,7 @@ namespace BlazorAppSolution.UI.Services
         }
 
         // Update an existing category
-        public async Task<Category> UpdateCategoryAsync(int id, Category category)
+        public async Task<Category> UpdateCategoryAsync(int id, Category category)x`
         {
             var response = await _httpClient.PutAsJsonAsync($"{ApiUrl}/{id}", category);
             response.EnsureSuccessStatusCode();

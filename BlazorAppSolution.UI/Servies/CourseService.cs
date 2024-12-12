@@ -9,8 +9,8 @@ namespace BlazorAppSolution.UI.Services
     public class CourseService
     {
         private readonly HttpClient _httpClient;
-        private const string CourseApiUrl = "https://actualbackendapp.azurewebsites.net/api/Courses";
-        private const string CategoryApiUrl = "https://actualbackendapp.azurewebsites.net/api/v1/Categories"; // New API URL for categories
+        private const string CourseApiUrl = "https://actbackendseervices.azurewebsites.net/api/courses";
+        private const string CategoryApiUrl = "https://actbackendseervices.azurewebsites.net/api/categories"; // New API URL for categories
 
         public CourseService(HttpClient httpClient)
         {
@@ -67,17 +67,5 @@ namespace BlazorAppSolution.UI.Services
         {
             return await _httpClient.GetFromJsonAsync<List<Category>>(CategoryApiUrl); // Fetch categories from the new API URL
         }
-
-        // New method to get a course by Name
-        public async Task<List<Course>> GetCourseByNameAsync(string courseName)
-        {
-            var response = await _httpClient.GetAsync($"{CourseApiUrl}/search/{courseName}");
-            if (response.IsSuccessStatusCode)
-            {
-                return await response.Content.ReadFromJsonAsync<List<Course>>() ?? new List<Course>();
-            }
-            throw new Exception($"Failed to fetch courses: {response.ReasonPhrase}");   
-        }
-
     }
 }
